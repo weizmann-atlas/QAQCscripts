@@ -1,0 +1,379 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>HV / Xray Log Builder</title>
+  <style>
+    body { margin: 0; font-family: system-ui, Arial, sans-serif; background: #7b2cbf; color: white; }
+    .wrap { max-width: 1100px; margin: 0 auto; padding: 20px; }
+    .card { background: rgba(0,0,0,0.18); border-radius: 16px; padding: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.25); }
+    .sectionTitle { margin: 0 0 10px; font-size: 16px; opacity: 0.95; }
+    .grid { display: grid; grid-template-columns: repeat(4, minmax(200px, 1fr)); gap: 12px; }
+    label { font-size: 12px; opacity: 0.95; }
+    input, select, textarea {
+      width: 100%; box-sizing: border-box; padding: 10px; border-radius: 10px;
+      border: 0; outline: none; margin-top: 6px; background: white; color: #111;
+    }
+    textarea { height: 140px; resize: vertical; }
+    .out { background: rgba(255,255,255,0.15); border-radius: 10px; padding: 10px; word-break: break-word; }
+    .btns { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
+    button { border: 0; padding: 10px 12px; border-radius: 10px; background: #5a189a; color: white; cursor: pointer; font-weight: 600; }
+    button:hover { background: #4a148c; }
+    .hint { font-size: 12px; opacity: 0.9; margin-top: 6px; }
+    hr { border: 0; border-top: 1px solid rgba(255,255,255,0.25); margin: 14px 0; }
+    @media (max-width: 980px) { .grid { grid-template-columns: repeat(2, minmax(180px, 1fr)); } }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h2 style="margin-top:0;">HV / Xray Log Builder</h2>
+    <div class="card">
+
+      <!-- Shared selectors -->
+      <h3 class="sectionTitle">Common</h3>
+      <div class="grid">
+        <div>
+          <label>Date (YYYY-MM-DD)</label>
+          <input id="date" />
+          <div class="hint">Example: 2025-10-28</div>
+        </div>
+        <div>
+          <label>Time (HH-MM)</label>
+          <input id="time" />
+          <div class="hint">Example: 13-56</div>
+        </div>
+        <div>
+          <label>Stage</label>
+          <select id="stage">
+            <option>Adapters</option>
+            <option selected>Single_Gap</option>
+            <option>Triplet</option>
+          </select>
+          <div class="hint">Stage controls detector/chamber list</div>
+        </div>
+        <div>
+          <label>Detector / Chamber name</label>
+          <select id="detector"></select>
+          <div class="hint" id="detHint"></div>
+        </div>
+
+        <div>
+          <label>Layer</label>
+          <input id="layer" type="number" min="0" max="99" value="3" />
+        </div>
+        <div>
+          <label>Module (0-100)</label>
+          <input id="module" type="number" min="0" max="100" value="10" />
+        </div>
+
+        <div>
+          <label>Serial number (suggested for assembled)</label>
+          <input id="serial" type="number" min="1" step="1" />
+          <div class="hint" id="serialHint"></div>
+        </div>
+        <div>
+          <label>Optional body (saved in HV .log only)</label>
+          <textarea id="body" placeholder="Write HV log lines here..."></textarea>
+        </div>
+      </div>
+
+      <hr>
+
+      <!-- HV section -->
+      <h3 class="sectionTitle">HV</h3>
+      <div class="grid">
+        <div>
+          <label>PS board (0-11)</label>
+          <input id="psboard" type="number" min="0" max="11" value="0" />
+        </div>
+        <div>
+          <label>PS ch (0-11)</label>
+          <input id="psch" type="number" min="0" max="11" value="1" />
+        </div>
+        <div>
+          <label>QC number</label>
+          <input id="qc" type="number" min="1" max="999" value="1" />
+        </div>
+        <div>
+          <label>Gas</label>
+          <select id="gas">
+            <option>np</option>
+            <option selected>CO2</option>
+          </select>
+        </div>
+
+        <div>
+          <label>Final</label>
+          <select id="final">
+            <option selected>yes</option>
+            <option>no</option>
+          </select>
+        </div>
+        <div>
+          <label>Generated filename</label>
+          <div class="out" id="filename"></div>
+        </div>
+        <div style="grid-column: span 2;">
+          <label>Generated HV header</label>
+          <div class="out" id="hvHeader"></div>
+        </div>
+      </div>
+
+      <div class="btns">
+        <button id="copyFileBtn">Copy filename</button>
+        <button id="copyHVBtn">Copy HV header</button>
+        <button id="downloadBtn">Download HV .log</button>
+      </div>
+
+      <hr>
+
+      <!-- Xray section -->
+      <h3 class="sectionTitle">Xray</h3>
+      <div class="grid">
+        <div>
+          <label>Xray rate</label>
+          <select id="rate">
+            <option selected>low</option>
+            <option>high</option>
+          </select>
+        </div>
+        <div>
+          <label>PS ch (0-11)</label>
+          <input id="xpsch" type="number" min="0" max="11" value="3" />
+          <div class="hint">Xray header uses PS ch only</div>
+        </div>
+        <div style="grid-column: span 2;">
+          <label>Generated Xray header</label>
+          <div class="out" id="xrayHeader"></div>
+        </div>
+      </div>
+
+      <div class="btns">
+        <button id="copyXrayBtn">Copy Xray header</button>
+      </div>
+
+    </div>
+  </div>
+
+<script>
+  const $ = (id) => document.getElementById(id);
+
+  function pad2(n){ return String(n).padStart(2,'0'); }
+
+  function setNow() {
+    const d = new Date();
+    $("date").value = `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
+    $("time").value = `${pad2(d.getHours())}-${pad2(d.getMinutes())}`;
+  }
+
+  function validDate(s){
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(s)) return false;
+    const [y,m,d] = s.split("-").map(Number);
+    const dt = new Date(y, m-1, d);
+    return dt.getFullYear()===y && (dt.getMonth()+1)===m && dt.getDate()===d;
+  }
+  function validTime(s){
+    if(!/^\d{2}-\d{2}$/.test(s)) return false;
+    const [h,m] = s.split("-").map(Number);
+    return h>=0 && h<=23 && m>=0 && m<=59;
+  }
+  function clampNum(v, lo, hi){
+    const n = Number(v);
+    if(Number.isNaN(n)) return lo;
+    return Math.max(lo, Math.min(hi, n));
+  }
+
+  // Stage -> detector/chamber options
+  const SINGLE_GAP_DETECTORS = ["EIL4B", "EIL4F", "EIL4Bs", "EIL4Fs"];
+  const ASSEMBLED_BASE_T = 11;
+
+  function assembledOptions(T=ASSEMBLED_BASE_T){
+    return [
+      {name:`T${T}B1`, baseSerial:1000, hint:"Triplet M1  T#B1: 1001,1002,1003,..."},
+      {name:`T${T}F1`, baseSerial:2000, hint:"Triplet M1  T#F1: 2001,2002,2003,..."},
+      {name:`T${T}B2`, baseSerial:3000, hint:"Doublet M2  T#B2: 3001,3002,3003,..."},
+      {name:`T${T}F2`, baseSerial:4000, hint:"Doublet M2  T#F2: 4001,4002,4003,..."},
+      {name:`T${T}B3`, baseSerial:5000, hint:"Doublet M3  T#B3: 5001,5002,5003,..."},
+      {name:`T${T}F3`, baseSerial:6000, hint:"Doublet M3  T#F3: 6001,6002,6003,..."}
+    ];
+  }
+
+  function suggestSerialFromDetector() {
+    const stage = $("stage").value;
+    if(stage === "Single_Gap"){
+      $("serialHint").textContent = "Serial ranges mainly for assembled chambers; optional here.";
+      if(!$("serial").value) $("serial").value = 1;
+      return;
+    }
+    const sel = $("detector");
+    const opt = sel.options[sel.selectedIndex];
+    const base = Number(opt?.dataset?.baseSerial || 1000);
+    const hint = opt?.dataset?.hint || "";
+    $("serialHint").textContent = hint || `Suggested: ${base+1}, ${base+2}, ...`;
+
+    const current = Number($("serial").value || 0);
+    if(!current || Math.floor(current / 1000) !== Math.floor(base / 1000)) {
+      $("serial").value = base + 1;
+    }
+  }
+
+  function setDetectorOptionsByStage() {
+    const stage = $("stage").value;
+    const detSel = $("detector");
+    detSel.innerHTML = "";
+
+    if(stage === "Single_Gap") {
+      SINGLE_GAP_DETECTORS.forEach(d => {
+        const opt = document.createElement("option");
+        opt.value = d;
+        opt.textContent = d;
+        detSel.appendChild(opt);
+      });
+      $("detHint").textContent = "Single gap detectors (EIL4*)";
+    } else {
+      const opts = assembledOptions();
+      opts.forEach(o => {
+        const opt = document.createElement("option");
+        opt.value = o.name;
+        opt.textContent = o.name;
+        opt.dataset.baseSerial = String(o.baseSerial);
+        opt.dataset.hint = o.hint;
+        detSel.appendChild(opt);
+      });
+      $("detHint").textContent = "Assembled chambers (T..B/F..)";
+    }
+
+    suggestSerialFromDetector();
+    rebuildHV();
+    rebuildXray();
+  }
+
+  function rebuildHV(){
+    const name = $("detector").value.trim();
+    const date = $("date").value.trim();
+    const time = $("time").value.trim();
+
+    const layer = clampNum($("layer").value, 0, 99);
+    const module = clampNum($("module").value, 0, 100);
+    const psb = clampNum($("psboard").value, 0, 11);
+    const psc = clampNum($("psch").value, 0, 11);
+    const stage = $("stage").value;
+    const qc = clampNum($("qc").value, 1, 999);
+    const gas = $("gas").value;
+    const fin = $("final").value;
+
+    $("layer").value = layer;
+    $("module").value = module;
+    $("psboard").value = psb;
+    $("psch").value = psc;
+    $("qc").value = qc;
+
+    if(!name){
+      $("filename").textContent = "(fix inputs) Detector/Chamber name is required.";
+      $("hvHeader").textContent = "(fix inputs) Detector/Chamber name is required.";
+      return;
+    }
+    if(!validDate(date)){
+      $("filename").textContent = "(fix inputs) Date must be valid YYYY-MM-DD.";
+      $("hvHeader").textContent = "(fix inputs) Date must be valid YYYY-MM-DD.";
+      return;
+    }
+    if(!validTime(time)){
+      $("filename").textContent = "(fix inputs) Time must be valid HH-MM.";
+      $("hvHeader").textContent = "(fix inputs) Time must be valid HH-MM.";
+      return;
+    }
+
+    const filename = `HV_QC${qc}_${date}_${time}.log`;
+    const header =
+      `# ${name} # layer # ${layer} # module # ${module} ` +
+      `# PS board # ${psb} # PS ch # ${psc} ` +
+      `# Stage # ${stage} # QC # ${qc} # Gas # ${gas} # final # ${fin}`;
+
+    $("filename").textContent = filename;
+    $("hvHeader").textContent = header;
+  }
+
+  function rebuildXray(){
+    const name = $("detector").value.trim();
+    const layer = clampNum($("layer").value, 0, 99);
+    const module = clampNum($("module").value, 0, 100);
+    const psc = clampNum($("xpsch").value, 0, 11);
+    const rate = $("rate").value;
+
+    $("xpsch").value = psc;
+
+    if(!name){
+      $("xrayHeader").textContent = "(fix inputs) Detector/Chamber name is required.";
+      return;
+    }
+    $("xrayHeader").textContent =
+      `# ${name} # layer # ${layer} # module # ${module} # PS ch # ${psc} # rate # ${rate}`;
+  }
+
+  async function copyText(text){
+    try {
+      await navigator.clipboard.writeText(text);
+      alert("Copied to clipboard.");
+    } catch(e){
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+      alert("Copied to clipboard.");
+    }
+  }
+
+  function downloadHVLog(){
+    const fn = $("filename").textContent;
+    const hdr = $("hvHeader").textContent;
+    if(fn.startsWith("(fix inputs)")) { alert("Fix inputs first."); return; }
+
+    const body = $("body").value.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+    const content = hdr + "\n" + (body ? (body.trimEnd() + "\n") : "");
+    const blob = new Blob([content], {type: "text/plain"});
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = fn;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  }
+
+  function wire() {
+    // common affects both
+    ["date","time","layer","module","serial","body"].forEach(id =>
+      $(id).addEventListener("input", () => { rebuildHV(); rebuildXray(); })
+    );
+
+    $("stage").addEventListener("input", setDetectorOptionsByStage);
+    $("detector").addEventListener("input", () => { suggestSerialFromDetector(); rebuildHV(); rebuildXray(); });
+
+    // HV-specific
+    ["psboard","psch","qc","gas","final"].forEach(id =>
+      $(id).addEventListener("input", rebuildHV)
+    );
+
+    // Xray-specific
+    ["rate","xpsch"].forEach(id =>
+      $(id).addEventListener("input", rebuildXray)
+    );
+
+    // buttons
+    $("copyFileBtn").addEventListener("click", () => copyText($("filename").textContent));
+    $("copyHVBtn").addEventListener("click", () => copyText($("hvHeader").textContent));
+    $("downloadBtn").addEventListener("click", downloadHVLog);
+    $("copyXrayBtn").addEventListener("click", () => copyText($("xrayHeader").textContent));
+  }
+
+  // init
+  setNow();
+  wire();
+  setDetectorOptionsByStage();
+  rebuildHV();
+  rebuildXray();
+</script>
+</body>
+</html>
