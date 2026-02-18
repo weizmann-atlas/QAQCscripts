@@ -205,7 +205,7 @@
   // Create the list
   const SINGLE_GAP_DETECTORS = makeSingleGapDetectors();
   
-// Triplet + Adapters:
+  // Triplet + Adapters:
   const TRIPLET_ADAPTERS_CONFIGS = [
     "U01B1I-10",
     "U01F1-20",
@@ -279,14 +279,14 @@
 
   function formatDetectorName(baseName, module, stage) {
     if (stage === "Triplet" || stage === "Adapters") {
-      // Format: base-number + padded module (e.g., U08B1I-10 + module 7 = U08B1I-1007)
+      // Format: keep hyphen and append base-number + padded module (e.g., U08B1I-10 + module 7 = U08B1I-1007)
       // Extract the number after the hyphen
       const match = baseName.match(/^(.+-)(\d+)$/);
       if (match) {
         const prefix = match[1]; // e.g., "U08B1I-"
         const baseNumber = match[2]; // e.g., "10"
         const paddedModule = String(module).padStart(2, "0");
-        return `${prefix}${baseNumber}${paddedModule}`; // e.g., "U08B1I-1007"
+        return `${prefix}${baseNumber}${paddedModule}`; // Keep hyphen, then append numbers
       }
     }
     return baseName;
@@ -329,7 +329,7 @@
     }
 
     const formattedName = formatDetectorName(name, module, stage);
-    const filename = `HV_QC${qc}_${date}_${time}.log`;
+    const filename = `HV_${stage}_QC${qc}_${date}_${time}.log`;
     const header =
       `# ${formattedName} # layer # ${layer} # module # ${module} ` +
       `# PS board # ${psb} # PS ch # ${psc} ` +
