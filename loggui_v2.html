@@ -48,9 +48,12 @@
         <div>
           <label>Stage</label>
           <select id="stage">
+            <option selected>Dry_test_clean_room</option>
+            <option>HV_before_xray</option>
+            <option>Doublet_Triplet_assembly</option>
             <option>Adapters</option>
-            <option selected>Single_Gap</option>
-            <option>Triplet</option>
+            <option>Final_tests</option>
+            <option>CERN_BB5</option>
           </select>
           <div class="hint">Stage controls detector/chamber list</div>
         </div>
@@ -253,7 +256,8 @@
     const detSel = $("detector");
     detSel.innerHTML = "";
 
-    if(stage === "Single_Gap") {
+    // Stages using Single Gap detector list
+    if(stage === "Dry_test_clean_room" || stage === "HV_before_xray") {
       SINGLE_GAP_DETECTORS.forEach(d => {
         const opt = document.createElement("option");
         opt.value = d;
@@ -262,7 +266,9 @@
       });
       $("detHint").textContent = "Single gap list (EIL4* + T#B/F)";
       $("moduleHint").textContent = "Module manually entered";
-    } else {
+    } 
+    // Stages using Triplet/Adapters detector list
+    else {
       TRIPLET_ADAPTERS_CONFIGS.forEach(d => {
         const opt = document.createElement("option");
         opt.value = d;
@@ -278,7 +284,9 @@
   }
 
   function formatDetectorName(baseName, module, stage) {
-    if (stage === "Triplet" || stage === "Adapters") {
+    // Apply formatting for stages that use Triplet/Adapters detectors
+    if (stage === "Doublet_Triplet_assembly" || stage === "Adapters" || 
+        stage === "Final_tests" || stage === "CERN_BB5") {
       // Format: keep hyphen and append base-number + padded module (e.g., U08B1I-10 + module 7 = U08B1I-1007)
       // Extract the number after the hyphen
       const match = baseName.match(/^(.+-)(\d+)$/);
