@@ -257,7 +257,7 @@ void create_plot(const HeaderInfo& header,
         }
         
         // Create canvas
-        std::string canvas_title = Form("VMon and IMon (PS Ch %d) - %s - Header %d", 
+        std::string canvas_title = Form("VMon and IMon (PS Ch %d) - %s ", 
                                         channel, date_str.c_str(), header.header_index);
         std::string canvas_name = Form("c_h%d_ch%d", header.header_index, channel);
         TCanvas* c = new TCanvas(canvas_name.c_str(), canvas_title.c_str(), 1000, 700);
@@ -278,8 +278,10 @@ void create_plot(const HeaderInfo& header,
             graph_vmon->SetLineColor(kRed);
             graph_vmon->GetYaxis()->SetAxisColor(kRed);
             graph_vmon->GetYaxis()->SetLabelColor(kRed);
+            graph_vmon->GetYaxis()->SetAxisColor(kRed);
             graph_vmon->GetXaxis()->SetTitle("Time [s]");
             graph_vmon->GetYaxis()->SetTitle("VMon [V]");
+            graph_vmon->GetYaxis()->SetTitleColor(kRed);
             graph_vmon->GetXaxis()->SetLimits(min_time, max_time);
             graph_vmon->GetYaxis()->SetRangeUser(vmon_min, vmon_max);
             graph_vmon->Draw("APL");
@@ -288,7 +290,9 @@ void create_plot(const HeaderInfo& header,
                                      "", 100, min_time, max_time, 100, vmon_min, vmon_max);
             h_frame->GetXaxis()->SetTitle("Time [s]");
             h_frame->GetYaxis()->SetTitle("VMon [V]");
+            h_frame->GetYaxis()->SetTitleOffset(1.3);
             h_frame->GetYaxis()->SetAxisColor(kRed);
+            h_frame->GetYaxis()->SetTitleColor(kRed);
             h_frame->GetYaxis()->SetLabelColor(kRed);
             h_frame->Draw();
         }
@@ -308,8 +312,9 @@ void create_plot(const HeaderInfo& header,
             graph_imon->SetMarkerStyle(21);
             graph_imon->SetMarkerColor(kBlue);
             graph_imon->SetLineColor(kBlue);
-            graph_imon->GetYaxis()->SetTitle("IMon [A]");
-            graph_imon->GetYaxis()->SetTitleOffset(1.25);
+            graph_imon->GetYaxis()->SetTitle("IMon [uA]");
+            graph_imon->GetYaxis()->SetTitleOffset(1.3);
+            graph_imon->GetYaxis()->SetTitleColor(kBlue);
             graph_imon->GetYaxis()->SetLabelOffset(0.015);
             graph_imon->GetYaxis()->SetAxisColor(kBlue);
             graph_imon->GetYaxis()->SetLabelColor(kBlue);
@@ -319,8 +324,9 @@ void create_plot(const HeaderInfo& header,
         } else {
             TH2D* h_frame = new TH2D(Form("h_imon_h%d_ch%d", header.header_index, channel),
                                      "", 100, min_time, max_time, 100, imon_min, imon_max);
-            h_frame->GetYaxis()->SetTitle("IMon [A]");
-            h_frame->GetYaxis()->SetTitleOffset(1.25);
+            h_frame->GetYaxis()->SetTitle("IMon [uA]");
+            h_frame->GetYaxis()->SetTitleOffset(1.3);
+            h_frame->GetYaxis()->SetTitleColor(kBlue);
             h_frame->GetYaxis()->SetLabelOffset(0.015);
             h_frame->GetYaxis()->SetAxisColor(kBlue);
             h_frame->GetYaxis()->SetLabelColor(kBlue);
@@ -336,7 +342,7 @@ void create_plot(const HeaderInfo& header,
         title->DrawLatexNDC(0.5, 0.95, canvas_title.c_str());
         
         // Create legend
-        TLegend* leg = new TLegend(0.7, 0.60, 0.9, 0.8);
+        TLegend* leg = new TLegend(0.2, 0.58, 0.5, 0.88);
         if (graph_vmon) leg->AddEntry(graph_vmon, "VMon", "lp");
         if (graph_imon) leg->AddEntry(graph_imon, "IMon", "lp");
         
